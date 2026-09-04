@@ -1,0 +1,13 @@
+# GOWIN EDA outputs
+impl/
+*.fs
+*.gprj.user
+*.log
+*.rpt
+*.json
+build/
+# simulation
+*.vcd
+*.vvp
+sim/out/
+.DS_Store
