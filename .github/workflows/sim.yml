@@ -1,0 +1,12 @@
+name: sim
+on: [push, pull_request]
+jobs:
+  iverilog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y iverilog python3-pil
+      - run: make sim | tee sim.log && grep -q '^PASS' sim.log
+      - run: make sim-display
+      - uses: actions/upload-artifact@v4
+        with: { name: hdmi-frame, path: sim/out/frame.png }
