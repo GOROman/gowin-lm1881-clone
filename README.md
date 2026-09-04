@@ -55,7 +55,7 @@ video_in ─▶ 2段FF同期化 ─▶ グリッチフィルタ(0.3us) ─▶ cs
 make sim      # iverilog でNTSC 525本×3フレーム + ノイズ + 信号喪失を流して PASS/FAIL 判定
 ```
 
-チェック内容: VSYNC 幅、フィールドごとの HSYNC 数 (262/263 交互)、ODD/EVEN の交番、BURST の遅延/幅、信号喪失で `locked` が落ちること。
+チェック内容: VSYNC 幅、フィールドごとの HSYNC 数 (NTSC 262/263、PAL 312/313 交互)、ODD/EVEN の交番、BURST の遅延/幅、NTSC→PAL 切替への追従、信号喪失で `locked` が落ちること。
 波形は `sim/out/tb_sync_separator.vcd` (GTKWave 等で確認)。
 
 ## STEP 2: Tang Nano 9K トップと入力フロントエンド
@@ -149,9 +149,18 @@ make flash        # 内蔵 Flash に書き込み (電源投入で起動)
 
 ### 未検証・注意
 
+* 合成時に `font5x7 ... is swept in optimizing` と警告が出ますが階層フラット化によるもので、テキスト描画を無効化した比較ビルド (LUT 729) との差分からフォント/テキスト論理は実装に残っていることを確認済み。
 * **実機未確認** です (手元にボードが無い状態で作成)。シミュレーション (NTSC 同期波形 + ノイズ) と GOWIN EDA の配置配線・タイミング (clk_pix Fmax 26.4 MHz > 25.2 MHz) までは通っています。
 * 出力は 3.3V。LM1881 のような 5V 系に繋ぐ場合はレベルの確認を。
 * HDMI 出力の LVDS バッファは `ELVDS_OBUF` (Sipeed サンプルと同じ)。
+
+## ビルド済みビットストリーム
+
+GOWIN EDA を入れなくても試せるよう、[Releases](https://github.com/GOROman/gowin-lm1881-clone/releases) に `lm1881_clone.fs` を置いています。
+
+```sh
+openFPGALoader -b tangnano9k -f lm1881_clone.fs
+```
 
 ## 使い方
 

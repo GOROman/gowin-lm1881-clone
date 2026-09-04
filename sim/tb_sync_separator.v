@@ -47,8 +47,26 @@ module tb_sync_separator;
         end
     endtask
 
+    // PAL (625 本): H=64us, 等化/切り込み 2.5 ライン (5 発) ずつ
+    localparam real HP = 64000.0, HP2 = HP / 2.0;
+    task pal_pulse(input real low_ns, input real total_ns);
+        begin vin = 0; #(low_ns); vin = 1; #(total_ns - low_ns); end
+    endtask
+    task pal_field1;  // ライン先頭から開始、半ラインで終わる
+        begin
+            repeat (5) pal_pulse(2350, HP2); repeat (5) pal_pulse(HP2 - 4700, HP2); repeat (5) pal_pulse(2350, HP2);
+            #(HP2); repeat (304) pal_pulse(4700, HP); pal_pulse(4700, HP2);
+        end
+    endtask
+    task pal_field2;  // 半ラインから開始、ライン先頭で終わる
+        begin
+            repeat (5) pal_pulse(2350, HP2); repeat (5) pal_pulse(HP2 - 4700, HP2); repeat (5) pal_pulse(2350, HP2);
+            repeat (305) pal_pulse(4700, HP);
+        end
+    endtask
+
     // ---- 計測 --------------------------------------------------------------
-    integer hs_cnt = 0, vs_cnt = 0, errors = 0;
+    integer hs_cnt = 0, vs_cnt = 0, errors = 0; reg pal = 0;
     real    vs_fall_t, vs_len, hs_last_t, hs_period, b_fall_t, b_len, csync_rise_t;
     reg     oe_at_vs;
 
@@ -65,13 +83,12 @@ module tb_sync_separator;
         $display("[%0t] VSYNC#%0d len=%.1fus odd_even=%0d field_lines=%0d hsync_in_field=%0d line_period=%0dclk h_width=%0dclk locked=%0d",
                  $realtime, vs_cnt, vs_len/1000.0, oe_at_vs, field_lines, hs_cnt, line_period, h_width, locked);
         // 期待値: VSYNC 幅 ≈ 2.5H + 7us (最初の BROAD 後縁 〜 最初の EQ 後縁)
-        if (vs_len < 2.4*H || vs_len > 2.8*H) begin errors = errors + 1; $display("  ERROR: vsync width"); end
-        if (vs_cnt >= 3) begin
-            // 2 フィールド目以降はライン数が 262/263 のどちらか
-            if (field_lines != 262 && field_lines != 263) begin errors = errors + 1; $display("  ERROR: field_lines"); end
-            // field_lines は「直前の VSYNC 開始〜今回の VSYNC 開始」の HSYNC 数。奇数開始時 263 / 偶数開始時 262 で交互になる
-            if (oe_at_vs == 1 && field_lines != 263) begin errors = errors + 1; $display("  ERROR: odd field start should follow 263-line interval"); end
-            if (oe_at_vs == 0 && field_lines != 262) begin errors = errors + 1; $display("  ERROR: even field start should follow 262-line interval"); end
+        // NTSC: 2.5H+7us ≈ 166us / PAL: 2H+7us ≈ 135us
+        if (vs_len < 120000 || vs_len > 180000) begin errors = errors + 1; $display("  ERROR: vsync width"); end
+        if (vs_cnt >= 3 && vs_cnt != 7) begin   // #7 は NTSC→PAL 切替直後なので除外
+            // field_lines は「直前の VSYNC 開始〜今回の VSYNC 開始」の HSYNC 数。奇数開始時 263/313、偶数開始時 262/312 で交互になる
+            if (oe_at_vs == 1 && field_lines != (pal ? 313 : 263)) begin errors = errors + 1; $display("  ERROR: odd field start should follow 263/313-line interval"); end
+            if (oe_at_vs == 0 && field_lines != (pal ? 312 : 262)) begin errors = errors + 1; $display("  ERROR: even field start should follow 262/312-line interval"); end
         end
         hs_cnt = 0;
     end
@@ -90,10 +107,15 @@ module tb_sync_separator;
         repeat (3) begin field1; field2; end
         #(2*H);
         if (!locked) begin errors = errors + 1; $display("ERROR: not locked"); end
+        // ---- PAL に切り替え ----
+        $display("--- PAL ---"); pal = 1;
+        repeat (3) begin pal_field1; pal_field2; end
+        #(2*HP);
+        if (!locked) begin errors = errors + 1; $display("ERROR: not locked (PAL)"); end
         // 入力喪失でロック解除されること
         vin = 1; #60_000_000;
         if (locked) begin errors = errors + 1; $display("ERROR: still locked after signal loss"); end
-        if (vs_cnt != 6) begin errors = errors + 1; $display("ERROR: vs_cnt=%0d", vs_cnt); end
+        if (vs_cnt != 12) begin errors = errors + 1; $display("ERROR: vs_cnt=%0d", vs_cnt); end
         if (errors == 0) $display("PASS"); else $display("FAIL: %0d errors", errors);
         $finish;
     end
