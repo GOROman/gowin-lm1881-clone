@@ -1,0 +1,39 @@
+// Tang Nano 9K (GW1NR-LV9QN88PC6/I5)
+IO_LOC "clk_27m" 52;
+IO_PORT "clk_27m" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+IO_LOC "key_s1_n" 3;
+IO_PORT "key_s1_n" PULL_MODE=UP;
+IO_LOC "key_s2_n" 4;
+IO_PORT "key_s2_n" PULL_MODE=UP;
+
+// LED (アクティブ L)
+IO_LOC "led_n[0]" 10;
+IO_LOC "led_n[1]" 11;
+IO_LOC "led_n[2]" 13;
+IO_LOC "led_n[3]" 14;
+IO_LOC "led_n[4]" 15;
+IO_LOC "led_n[5]" 16;
+IO_PORT "led_n[0]" PULL_MODE=UP DRIVE=8;
+IO_PORT "led_n[1]" PULL_MODE=UP DRIVE=8;
+IO_PORT "led_n[2]" PULL_MODE=UP DRIVE=8;
+IO_PORT "led_n[3]" PULL_MODE=UP DRIVE=8;
+IO_PORT "led_n[4]" PULL_MODE=UP DRIVE=8;
+IO_PORT "led_n[5]" PULL_MODE=UP DRIVE=8;
+
+// ビデオ入出力 (右側 2x24 ヘッダ, 3.3V バンク)
+IO_LOC "video_in"  25;
+IO_PORT "video_in"  IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_LOC "slice_pwm" 26;
+IO_PORT "slice_pwm" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC "csync_n"   27;
+IO_LOC "hsync_n"   28;
+IO_LOC "vsync_n"   29;
+IO_LOC "burst_n"   30;
+IO_LOC "odd_even"  31;
+IO_LOC "locked"    32;
+IO_PORT "csync_n"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "hsync_n"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "vsync_n"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "burst_n"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "odd_even" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "locked"   IO_TYPE=LVCMOS33 DRIVE=8;
