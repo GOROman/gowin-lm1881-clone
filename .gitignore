@@ -11,3 +11,4 @@ build/
 *.vvp
 sim/out/
 .DS_Store
+!bitstream/*.fs

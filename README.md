@@ -156,10 +156,10 @@ make flash        # 内蔵 Flash に書き込み (電源投入で起動)
 
 ## ビルド済みビットストリーム
 
-GOWIN EDA を入れなくても試せるよう、[Releases](https://github.com/GOROman/gowin-lm1881-clone/releases) に `lm1881_clone.fs` を置いています。
+GOWIN EDA を入れなくても試せるよう、`bitstream/lm1881_clone.fs` をリポジトリに同梱しています (タグ [v0.1.0](https://github.com/GOROman/gowin-lm1881-clone/releases/tag/v0.1.0) 時点のビルド)。
 
 ```sh
-openFPGALoader -b tangnano9k -f lm1881_clone.fs
+openFPGALoader -b tangnano9k -f bitstream/lm1881_clone.fs
 ```
 
 ## 使い方
