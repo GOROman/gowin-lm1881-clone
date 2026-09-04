@@ -6,3 +6,4 @@ module OSER10 #(parameter GSREN="false", LSREN="true") (output reg Q, input D0,D
     always @(posedge FCLK or negedge FCLK) begin Q <= sh[n]; n <= (n == 9) ? 0 : n + 1; end
 endmodule
 module TLVDS_OBUF (input I, output O, output OB); assign O = I; assign OB = ~I; endmodule
+module ELVDS_OBUF (input I, output O, output OB); assign O = I; assign OB = ~I; endmodule
