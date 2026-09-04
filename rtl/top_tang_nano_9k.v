@@ -16,7 +16,10 @@ module top_tang_nano_9k (
     output wire       burst_n,
     output wire       odd_even,
     output wire       locked,
-    output wire [5:0] led_n         // アクティブ L
+    output wire [5:0] led_n,        // アクティブ L
+
+    output wire       tmds_clk_p, tmds_clk_n,
+    output wire [2:0] tmds_d_p, tmds_d_n
 );
     // ---- クロック ---------------------------------------------------------
     wire clk_ser, pll_lock, clk_pix;
@@ -66,5 +69,18 @@ module top_tang_nano_9k (
     reg vs_tgl, vs_d;
     always @(posedge clk_pix) begin vs_d <= vsync_n; if (vs_d & ~vsync_n) vs_tgl <= ~vs_tgl; end
     assign led_n = ~{~key_s1_n, act_cnt != 0, pll_lock, vs_tgl, odd_even, locked};
+
+    // ---- HDMI ステータス表示 ------------------------------------------------------
+    wire [9:0]  px, py;
+    wire [23:0] rgb;
+    hdmi_tx u_hdmi (
+        .clk_pix(clk_pix), .clk_ser(clk_ser), .rst_n(rst_n),
+        .x(px), .y(py), .de_ahead(), .rgb(rgb),
+        .tmds_clk_p(tmds_clk_p), .tmds_clk_n(tmds_clk_n), .tmds_d_p(tmds_d_p), .tmds_d_n(tmds_d_n));
+    status_display #(.CLK_HZ(25_200_000)) u_disp (
+        .clk(clk_pix), .rst_n(rst_n), .x(px), .y(py), .rgb(rgb),
+        .csync_n(csync_n), .hsync_n(hsync_n), .vsync_n(vsync_n), .burst_n(burst_n),
+        .odd_even(odd_even), .locked(locked), .pll_lock(pll_lock), .in_active(act_cnt != 0), .agc_hold(~key_s1_n),
+        .line_period(line_period), .h_width(h_width), .field_lines(field_lines), .duty(duty));
 endmodule
 `default_nettype wire

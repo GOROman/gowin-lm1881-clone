@@ -37,3 +37,13 @@ IO_PORT "vsync_n"  IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "burst_n"  IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "odd_even" IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "locked"   IO_TYPE=LVCMOS33 DRIVE=8;
+
+// HDMI (TMDS)
+IO_LOC "tmds_clk_p" 69,68;
+IO_PORT "tmds_clk_p" PULL_MODE=NONE;
+IO_LOC "tmds_d_p[0]" 71,70;
+IO_PORT "tmds_d_p[0]" PULL_MODE=NONE;
+IO_LOC "tmds_d_p[1]" 73,72;
+IO_PORT "tmds_d_p[1]" PULL_MODE=NONE;
+IO_LOC "tmds_d_p[2]" 75,74;
+IO_PORT "tmds_d_p[2]" PULL_MODE=NONE;

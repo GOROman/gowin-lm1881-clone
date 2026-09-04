@@ -27,7 +27,7 @@ GOWIN FPGA (Tang Nano 9K / GW1NR-9C, HDMI 付き) で **LM1881 相当のビデ�
 - [x] **STEP 0**: リポジトリ作成 (public)、README に計画を書く
 - [x] **STEP 1**: コア RTL `rtl/sync_separator.v` と NTSC 模擬テストベンチ `sim/tb_sync_separator.v` (iverilog で検証)
 - [x] **STEP 2**: Tang Nano 9K 用トップ `rtl/top_tang_nano_9k.v`、ピン制約 `constr/tang_nano_9k.cst`、スライスレベル用 PWM DAC (gw_sh で合成・配置配線 OK)
-- [ ] **STEP 3**: HDMI ステータス表示 (640x480@60, TMDS エンコーダ, 同期波形表示)
+- [x] **STEP 3**: HDMI ステータス表示 (640x480@60, TMDS エンコーダ, 同期波形表示)
 - [ ] **STEP 4**: GOWIN EDA (`gw_sh`) で合成 → ビットストリーム生成 → `openFPGALoader` で書き込み、Makefile 整備
 
 ## STEP 1: コア RTL の設計
@@ -109,6 +109,30 @@ make flash        # 内蔵 Flash に書き込み
 ```
 
 `gowin/gw_sh.sh` は macOS 版 GOWIN EDA (`/Applications/GowinIDE.app`) の `gw_sh` に DYLD パスを通すラッパ。別の場所なら `GOWIN_HOME` で指定。
+
+## STEP 3: HDMI ステータス表示
+
+HDMI (DVI 信号) に 640x480@60 で状態を表示します。ADC もフレームバッファも無いので映像そのものは出ませんが、
+「同期がちゃんと取れているか」をモニタ 1 台で確認できます。
+
+![HDMI 画面 (シミュレーションで描画)](docs/hdmi_screen_sim.png)
+
+* 上段: LOCK / PLL / FIELD(ODD/EVEN) / 入力あり、フィールドのライン数、H 周期 [us]、同期パルス幅 [us]、スライスレベル duty
+* **H VIEW**: HSYNC トリガで 1 ライン分 (3clk/px = 76us) の CS/HS/VS/BG 波形
+* **V VIEW**: VSYNC トリガで 6.4 ライン分 (16clk/px = 406us)。切り込みパルス→等化パルス→通常ラインの遷移と VSYNC 出力が見える
+
+構成 (`rtl/hdmi/`):
+
+| ファイル | 内容 |
+|---|---|
+| `hdmi_tx.v` | 640x480 タイミング生成、TMDS 3ch + クロックを `OSER10` (10:1) → `ELVDS_OBUF` で出力 |
+| `tmds_encoder.v` | DVI 1.0 の 8b/10b エンコーダ |
+| `status_display.v` | 波形キャプチャ (BSRAM 2 本)、テキスト描画、数値→BCD |
+| `font5x7.v` / `screen_text.v` | `tools/gen_font.py` / `tools/gen_screen.py` が生成する 5x7 フォントと固定文言 |
+
+画面はシミュレーションでも描画できます (`make sim-display` → `sim/out/frame.png`)。GOWIN プリミティブは `sim/gowin_stubs.v` で代用。
+
+リソース: LUT 1867 / 8640 (22%)、FF 546、BSRAM 2/26。タイミング: clk_pix 25.2 MHz に対し Fmax 26.4 MHz。
 
 ## ライセンス
 

@@ -2,6 +2,12 @@
 set_device GW1NR-LV9QN88PC6/I5 -device_version C
 add_file rtl/sync_separator.v
 add_file rtl/slice_agc.v
+add_file rtl/hdmi/tmds_encoder.v
+add_file rtl/hdmi/hdmi_tx.v
+add_file rtl/hdmi/font5x7.v
+add_file rtl/hdmi/screen_text.v
+add_file rtl/hdmi/bin2bcd16.v
+add_file rtl/hdmi/status_display.v
 add_file rtl/top_tang_nano_9k.v
 add_file constr/tang_nano_9k.cst
 add_file constr/tang_nano_9k.sdc

@@ -26,3 +26,17 @@ flash-sram: $(FS)       # SRAM に一時書き込み (電源断で消える)
 
 flash: $(FS)            # 内蔵 Flash に書き込み
 	openFPGALoader -b tangnano9k -f $(FS)
+
+# HDMI 画面を 1 フレーム シミュレーションで描画 → sim/out/frame.png (要 Pillow)
+HDMI_RTL = rtl/sync_separator.v rtl/hdmi/tmds_encoder.v rtl/hdmi/hdmi_tx.v rtl/hdmi/font5x7.v \
+           rtl/hdmi/screen_text.v rtl/hdmi/bin2bcd16.v rtl/hdmi/status_display.v
+.PHONY: sim-display gen
+sim-display: $(HDMI_RTL) sim/gowin_stubs.v sim/tb_display.v
+	@mkdir -p $(SIM_OUT)
+	iverilog -g2012 -o $(SIM_OUT)/tb_display.vvp sim/gowin_stubs.v $(HDMI_RTL) sim/tb_display.v
+	vvp -n $(SIM_OUT)/tb_display.vvp
+	python3 -c "from PIL import Image; Image.open('$(SIM_OUT)/frame.ppm').save('$(SIM_OUT)/frame.png')"
+
+gen:    # フォント ROM / 画面テキストを再生成
+	python3 tools/gen_font.py
+	python3 tools/gen_screen.py
