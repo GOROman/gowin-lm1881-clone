@@ -25,10 +25,38 @@ GOWIN FPGA (Tang Nano 9K / GW1NR-9C, HDMI 付き) で **LM1881 相当のビデ�
 各 STEP ごとに 1 コミットしています。`git log` と対応します。
 
 - [x] **STEP 0**: リポジトリ作成 (public)、README に計画を書く
-- [ ] **STEP 1**: コア RTL `rtl/sync_separator.v` と NTSC 模擬テストベンチ `sim/tb_sync_separator.v` (iverilog で検証)
+- [x] **STEP 1**: コア RTL `rtl/sync_separator.v` と NTSC 模擬テストベンチ `sim/tb_sync_separator.v` (iverilog で検証)
 - [ ] **STEP 2**: Tang Nano 9K 用トップ `rtl/top_tang_nano_9k.v`、ピン制約 `constr/tang_nano_9k.cst`、スライスレベル用 PWM DAC
 - [ ] **STEP 3**: HDMI ステータス表示 (640x480@60, TMDS エンコーダ, 同期波形表示)
 - [ ] **STEP 4**: GOWIN EDA (`gw_sh`) で合成 → ビットストリーム生成 → `openFPGALoader` で書き込み、Makefile 整備
+
+## STEP 1: コア RTL の設計
+
+`rtl/sync_separator.v` はすべて **パルス幅と間隔の時間計測** で動く純デジタル回路です (ADC 不要、比較器で 2 値化した同期信号だけを使う)。
+
+```
+video_in ─▶ 2段FF同期化 ─▶ グリッチフィルタ(0.3us) ─▶ csync_n
+                                   │
+                                   ├─▶ L幅計測 ──▶ 分類: EQ(<3.5us) / H(<7us) / BROAD(<40us)
+                                   │                      │
+                                   │                      ├─▶ 最初のBROADで vsync_n=L、非BROADで H
+                                   │                      ├─▶ そのとき先頭位相がライン先頭なら odd_even=1
+                                   │                      └─▶ H/EQ 後縁 +0.6us から 2.5us burst_n=L
+                                   │
+                                   └─▶ 先頭エッジ: 前回 HSYNC から 3/4 ライン以上なら hsync_n パルス
+                                       (半ライン間隔の等化/切り込みパルスを除去)
+```
+
+時定数はすべて `CLK_HZ` パラメータから計算されるので、27 MHz でも 25.2 MHz でも動きます。NTSC / PAL の判別は不要 (パルス幅は共通)。
+
+### シミュレーション
+
+```sh
+make sim      # iverilog でNTSC 525本×3フレーム + ノイズ + 信号喪失を流して PASS/FAIL 判定
+```
+
+チェック内容: VSYNC 幅、フィールドごとの HSYNC 数 (262/263 交互)、ODD/EVEN の交番、BURST の遅延/幅、信号喪失で `locked` が落ちること。
+波形は `sim/out/tb_sync_separator.vcd` (GTKWave 等で確認)。
 
 ## ライセンス
 
